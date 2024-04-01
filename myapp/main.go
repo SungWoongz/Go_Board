@@ -39,33 +39,37 @@ func init() {
 	db.AutoMigrate(&Board{})
 }
 
+// 모든 게시판 글 조회
 func getUsers(c echo.Context) error {
 	var users []Board
 	db.Find(&users)
-	return c.JSON(200, users)
+	return c.JSON(http.StatusOK, users)
 }
 
-func createUser(c echo.Context) error {
-	user := new(Board)
-	if err := c.Bind(user); err != nil {
+// 글 작성
+func postBoard(c echo.Context) error {
+	board := new(Board)
+	if err := c.Bind(board); err != nil {
 		return err
 	}
-	db.Create(&user)
-	return c.JSON(201, user)
+	db.Create(&board)
+	return c.JSON(http.StatusCreated, board)
 }
 
+// id로 글 상세조회
 func getUserByID(c echo.Context) error {
 	id := c.Param("id")
-	var user Board
-	db.First(&user, id)
-	return c.JSON(200, user)
+	var board Board
+	db.First(&board, id)
+	return c.JSON(http.StatusOK, board)
 }
 
+// 게시판 글 삭제 by id
 func deleteUserByID(c echo.Context) error {
 	id := c.Param("id")
-	var user Board
-	db.Delete(&user, id)
-	return c.NoContent(204)
+	var board Board
+	db.Delete(&board, id)
+	return c.NoContent(http.StatusNoContent)
 }
 
 func main() {
@@ -79,10 +83,21 @@ func main() {
 	e.Use(middleware.Recover())
 
 	// Routes
-	e.GET("/users", getUsers)
-	e.POST("/users", createUser)
-	e.GET("/users/:id", getUserByID)
-	e.DELETE("/users/:id", deleteUserByID)
+	e.GET("/boards", getUsers)
+	e.POST("/boards", postBoard)
+	e.GET("/boards/:id", getUserByID)
+	e.DELETE("/boards/:id", deleteUserByID)
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))
 }
+
+// 게시글 작성
+// curl -X POST http://localhost:1323/boards -d '{"name":"Lee","board_id":1,"title":"First board","content":"First Content","view":0}' -H "Content-Type: application/json"
+// 게시글 조회
+// curl http://localhost:1323/boards
+// 특정 게시글 조회
+// curl http://localhost:1323/boards/1
+// 게시글 수정하기
+// curl -X POST http://localhost:1323/boards -d '{"name":"John","board_id":2,"title":"Updated Title","content":"Updated Content","view":0}' -H "Content-Type: application/json"
+// 게시글 삭제하기
+// curl -X DELETE http://localhost:1323/boards/1
