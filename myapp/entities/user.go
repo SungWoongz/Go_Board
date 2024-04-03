@@ -19,7 +19,8 @@ type Board struct {
 
 type User struct {
 	gorm.Model
-	UserID    string    `json:"userid" db:"userid"`         // 유저 id
+	Username  string    `json:"username" db:"username"`     // 유저 이름
+	Email     string    `json:"userid" db:"userid"`         // 유저 id
 	Password  string    `json:"password" db:"password"`     // 유저 pw
 	CreatedAt time.Time `json:"created_at" db:"created_at"` // 로그인 시간
 }
