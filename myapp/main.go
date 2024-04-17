@@ -3,10 +3,17 @@ package main
 import (
 	"myapp/db"
 	"myapp/handlers"
+	"net/http"
 
+	"github.com/gorilla/sessions"
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
+
+// var (
+// 	storesess = session.NewCookieStore([]byte("your-serect-key"))
+// )
 
 func main() {
 	// PostgreSQL 데이터베이스 DSN 설정
@@ -19,6 +26,39 @@ func main() {
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
+
+	e.GET("/login/gorilla", func(c echo.Context) error {
+		sess, _ := session.Get("authenticate-sessions", c)
+		sess.Options = &sessions.Options{
+			Path:     "/secret",
+			MaxAge:   86400, // (86400) => 24 * 60 * 60
+			HttpOnly: true,
+		}
+		// Authentication goes here
+		// ...
+
+		// Set user as authenticated
+		sess.Values["authenticated"] = true
+		sess.Save(c.Request(), c.Response())
+		return c.NoContent(http.StatusOK)
+	})
+	e.GET("/logout", func(c echo.Context) error {
+		sess, _ := session.Get("authenticate-sessions", c)
+		// Revoke users authentication
+		sess.Values["authenticated"] = false
+		return c.NoContent(http.StatusOK)
+	})
+	e.GET("/secret", func(c echo.Context) error {
+		sess, _ := session.Get("authenticate-sessions", c)
+		if auth, ok := sess.Values["authenticated"].(bool); !ok || !auth {
+			return echo.NewHTTPError(http.StatusUnauthorized, "Please provide valid credentials")
+
+		} else {
+			return c.JSON(http.StatusOK, "You're able to read a secret")
+		}
+
+	})
 
 	// e.GET("/login", func(c echo.Context) error {
 	// 	return c.File("pages/login.html")
@@ -42,6 +82,7 @@ func main() {
 	// 유저 등록
 	e.POST("/users", handlers.PostRegUser)
 
+	e.Static("/static", "style")
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))
 }

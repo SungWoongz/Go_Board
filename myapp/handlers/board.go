@@ -36,6 +36,7 @@ func Login(c echo.Context) error {
 
 		// 인증 성공 시 메인 페이지로 redirect
 		// TODO 세션 설정 or 토큰 생성
+
 		return c.Redirect(http.StatusFound, "/main")
 	}
 	// GET 요청일 때
